@@ -1,0 +1,61 @@
+
+//+------------------------------------------------------------------+
+//|                                                Relative Strength Index |
+//|                                 Copyright © 2022 forexroboteasy.com |
+//|                                           Developed by Forex Robot Easy Team |
+//+------------------------------------------------------------------+
+
+//--- Include necessary libraries
+#include <Trade\Trade.mqh>
+#include <Indicators\Indicators.mqh>
+
+//--- Define input parameters
+input int RSI_Period = 14; // RSI calculation period
+input int RSI_Level_Overbought = 70; // Overbought level
+input int RSI_Level_Oversold = 30; // Oversold level
+input int Trade_Start_Hour = 8; // Trading start hour
+input int Trade_End_Hour = 16; // Trading end hour
+input double Take_Profit = 100; // Take profit level in pips
+input double Stop_Loss = 50; // Stop loss level in pips
+
+//--- Create an instance of the RSI indicator
+CRSI rsi;
+
+//--- Create an instance of the trading class
+CTrade trade;
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+   //--- Check if it's time to trade
+   if (TimeHour(TimeCurrent()) < Trade_Start_Hour || TimeHour(TimeCurrent()) > Trade_End_Hour)
+      return;
+
+   //--- Retrieve RSI data
+   double rsi_value = rsi.iRSI(NULL, 0, RSI_Period, PRICE_CLOSE, 0);
+
+   //--- Check RSI levels
+   if (rsi_value > RSI_Level_Overbought)
+   {
+      //--- Sell
+      if (!trade.Sell(0.1, Symbol(), 0, 0, Stop_Loss, Take_Profit))
+         Print('Error in opening sell order');
+   }
+   else if (rsi_value < RSI_Level_Oversold)
+   {
+      //--- Buy
+      if (!trade.Buy(0.1, Symbol(), 0, 0, Stop_Loss, Take_Profit))
+         Print('Error in opening buy order');
+   }
+}
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+   //--- Close any open positions when the EA is removed from the chart
+   trade.CloseAll();
+}
